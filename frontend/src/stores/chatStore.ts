@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { 
   Model, 
+  Provider,
   Message, 
   ConversationSummary, 
   ModelResponse,
@@ -18,6 +19,7 @@ interface ChatStore {
   
   // Model selection
   availableModels: Model[];
+  providers: Provider[];
   selectedModels: string[];
   
   // History
@@ -29,6 +31,7 @@ interface ChatStore {
   
   // Actions
   setAvailableModels: (models: Model[]) => void;
+  setProviders: (providers: Provider[]) => void;
   toggleModel: (modelId: string) => void;
   selectAllModels: () => void;
   deselectAllModels: () => void;
@@ -57,6 +60,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   isLoading: false,
   currentResponses: {},
   availableModels: [],
+  providers: [],
   selectedModels: [],
   conversations: [],
   ws: null,
@@ -86,6 +90,50 @@ export const useChatStore = create<ChatStore>((set, get) => ({
     }
     
     set({ availableModels: models, selectedModels });
+  },
+
+  setProviders: (providers) => {
+    // Extract all available models (only those with API keys) from providers
+    const availableModels: Model[] = [];
+    for (const provider of providers) {
+      for (const model of provider.models) {
+        if (model.has_api_key) {
+          availableModels.push(model);
+        }
+      }
+    }
+    
+    // Try to load saved selection from localStorage
+    const savedModels = localStorage.getItem('llm-council-selected-models');
+    let selectedModels: string[];
+    
+    if (savedModels) {
+      try {
+        const parsed = JSON.parse(savedModels) as string[];
+        // Only use saved models that are still available
+        selectedModels = parsed.filter(id => availableModels.some(m => m.id === id));
+        // If no saved models are valid, select featured ones or first few
+        if (selectedModels.length === 0) {
+          const featured = availableModels.filter(m => m.is_featured);
+          selectedModels = featured.length > 0 
+            ? featured.map(m => m.id)
+            : availableModels.slice(0, 3).map(m => m.id);
+        }
+      } catch {
+        const featured = availableModels.filter(m => m.is_featured);
+        selectedModels = featured.length > 0 
+          ? featured.map(m => m.id)
+          : availableModels.slice(0, 3).map(m => m.id);
+      }
+    } else {
+      // Select featured models by default, or first 3 if no featured
+      const featured = availableModels.filter(m => m.is_featured);
+      selectedModels = featured.length > 0 
+        ? featured.map(m => m.id)
+        : availableModels.slice(0, 3).map(m => m.id);
+    }
+    
+    set({ providers, availableModels, selectedModels });
   },
   
   toggleModel: (modelId) => {

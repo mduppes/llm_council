@@ -15,8 +15,22 @@ class ModelInfo(BaseModel):
     id: str
     name: str
     provider: str
+    description: Optional[str] = None  # Tooltip describing the model
     input_cost_per_million: Optional[float] = None  # Cost per million input tokens
     output_cost_per_million: Optional[float] = None  # Cost per million output tokens
+    max_tokens: Optional[int] = None  # Maximum context window
+    supports_vision: bool = False  # Whether model supports images
+    supports_tools: bool = False  # Whether model supports function calling
+    is_featured: bool = False  # Whether this is a popular/recommended model
+    has_api_key: bool = True  # Whether the API key is configured
+
+
+class ProviderInfo(BaseModel):
+    """Information about a model provider and its available models."""
+    id: str
+    name: str
+    has_api_key: bool  # Whether the API key for this provider is configured
+    models: List[ModelInfo]
 
 
 # =============================================================================

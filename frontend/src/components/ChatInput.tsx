@@ -6,7 +6,12 @@ export function ChatInput() {
   const [input, setInput] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
-  const { sendMessage, isLoading, wsConnected, selectedModels } = useChatStore();
+  const { sendMessage, isLoading, wsConnected, selectedModels, availableModels } = useChatStore();
+  
+  // Get names of selected models
+  const selectedModelNames = selectedModels
+    .map(id => availableModels.find(m => m.id === id)?.name || id.split('/').pop() || id)
+    .sort();
   
   const canSubmit = input.trim() && wsConnected && selectedModels.length > 0 && !isLoading;
   
@@ -81,12 +86,19 @@ export function ChatInput() {
       </div>
       
       {/* Status indicators */}
-      <div className="flex items-center justify-center gap-4 mt-2 text-xs text-slate-500">
-        <span className="flex items-center gap-1">
-          <span className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-green-500' : 'bg-red-500'}`} />
-          {wsConnected ? 'Connected' : 'Disconnected'}
-        </span>
-        <span>{selectedModels.length} model(s) selected</span>
+      <div className="flex flex-col items-center gap-1 mt-2 text-xs text-slate-500">
+        <div className="flex items-center gap-4">
+          <span className="flex items-center gap-1">
+            <span className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+            {wsConnected ? 'Connected' : 'Disconnected'}
+          </span>
+          <span>{selectedModels.length} model(s) selected</span>
+        </div>
+        {selectedModels.length > 0 && (
+          <div className="text-slate-400 text-center max-w-2xl truncate">
+            {selectedModelNames.join(', ')}
+          </div>
+        )}
       </div>
     </form>
   );

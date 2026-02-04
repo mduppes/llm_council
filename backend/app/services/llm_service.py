@@ -13,6 +13,7 @@ settings = get_settings()
 
 # Configure LiteLLM
 litellm.set_verbose = settings.debug
+litellm.drop_params = True  # Drop unsupported params (e.g., temperature for gpt-5)
 
 
 class LLMService:
@@ -45,12 +46,21 @@ class LLMService:
     
     def get_available_models(self) -> List[dict]:
         """Get list of available models based on configured API keys."""
-        models = self.settings.enabled_models
-        # Enrich with cost information
-        for model in models:
-            cost_info = self.get_model_cost(model["id"])
-            model.update(cost_info)
-        return models
+        # Use model registry for dynamic model discovery
+        from app.services.model_registry import model_registry
+        models = model_registry.get_available_models()
+        return [m.to_dict() for m in models]
+    
+    def get_all_models_grouped(self) -> List[dict]:
+        """Get all models grouped by provider, including unavailable ones."""
+        from app.services.model_registry import model_registry
+        providers = model_registry.get_all_models(include_unavailable=True)
+        # Sort providers: those with API keys first
+        sorted_providers = sorted(
+            providers.values(),
+            key=lambda p: (0 if p.has_api_key else 1, p.name.lower())
+        )
+        return [p.to_dict() for p in sorted_providers]
     
     async def complete(
         self,

@@ -24,11 +24,21 @@ async def get_available_models():
     return [ModelInfo(**m) for m in models]
 
 
+@router.get("/models/grouped")
+async def get_grouped_models():
+    """Get all models grouped by provider, including unavailable ones."""
+    return llm_service.get_all_models_grouped()
+
+
 def get_model_name(model_id: str) -> str:
     """Get display name for a model ID."""
-    for model in settings.enabled_models:
-        if model["id"] == model_id:
-            return model["name"]
+    # Try to get from registry first
+    from app.services.model_registry import model_registry
+    providers = model_registry.get_all_models(include_unavailable=True)
+    for provider in providers.values():
+        for model in provider.models:
+            if model.id == model_id:
+                return model.name
     return model_id
 
 

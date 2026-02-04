@@ -8,8 +8,21 @@ export interface Model {
   id: string;
   name: string;
   provider: string;
+  description?: string | null;
   input_cost_per_million?: number | null;
   output_cost_per_million?: number | null;
+  max_tokens?: number | null;
+  supports_vision?: boolean;
+  supports_tools?: boolean;
+  is_featured?: boolean;
+  has_api_key?: boolean;
+}
+
+export interface Provider {
+  id: string;
+  name: string;
+  has_api_key: boolean;
+  models: Model[];
 }
 
 // =============================================================================

@@ -9,15 +9,25 @@ Chat with multiple LLMs simultaneously and compare their responses side-by-side.
 - 💬 **Streaming responses** - Real-time token display via WebSocket
 - 📚 **Conversation history** - Auto-saved to database, easily reload past chats
 - 🎨 **Modern UI** - Clean, responsive design with TailwindCSS
+- 📈 **Usage tracking** - Monitor token usage and estimated costs per model
+- 🔌 **Dynamic model discovery** - Automatically detects available models from LiteLLM
 
-## Supported Models
+## Supported Providers
 
-| Provider | Models |
-|----------|--------|
-| **OpenAI** | GPT-4o, GPT-4o Mini |
-| **Anthropic** | Claude 3.5 Sonnet, Claude 3 Opus |
-| **Google** | Gemini 1.5 Flash, Gemini 1.5 Pro |
-| **xAI** | Grok 2 |
+Models are dynamically discovered from LiteLLM. Just add your API key and all available models from that provider will appear:
+
+| Provider | API Key Variable | Example Models |
+|----------|------------------|----------------|
+| **OpenAI** | `OPENAI_API_KEY` | GPT-4o, GPT-4o Mini, o1, o3-mini |
+| **Anthropic** | `ANTHROPIC_API_KEY` | Claude 4 Sonnet, Claude 3.5 Sonnet/Haiku, Claude 3 Opus |
+| **Google Gemini** | `GEMINI_API_KEY` | Gemini 2.0 Flash, Gemini 1.5 Pro/Flash |
+| **xAI** | `XAI_API_KEY` | Grok 2, Grok 3 |
+| **Mistral** | `MISTRAL_API_KEY` | Mistral Large, Mixtral |
+| **Cohere** | `COHERE_API_KEY` | Command R, Command R+ |
+| **Together AI** | `TOGETHER_API_KEY` | Llama, Mixtral (open source) |
+| **Groq** | `GROQ_API_KEY` | Llama 3.3, Mixtral (fast inference) |
+| **DeepSeek** | `DEEPSEEK_API_KEY` | DeepSeek Chat, DeepSeek Reasoner |
+| **Perplexity** | `PERPLEXITY_API_KEY` | Sonar, Sonar Pro (with search) |
 
 ## Quick Start
 
@@ -40,11 +50,19 @@ cp .env.example .env
 Edit `.env` and add your API keys:
 
 ```bash
-# Required: Add at least one of these
+# Add any combination of these - models auto-discover based on available keys
 OPENAI_API_KEY=sk-proj-xxxxxxxxxxxxxxxxxxxx
 ANTHROPIC_API_KEY=sk-ant-api03-xxxxxxxxxxxxxxxxxxxx
 GEMINI_API_KEY=AIzaSyxxxxxxxxxxxxxxxxxxxxxxxxx
 XAI_API_KEY=xai-xxxxxxxxxxxxxxxxxxxx
+
+# Optional: Additional providers
+MISTRAL_API_KEY=xxxxxxxxxxxxxxxxxxxx
+COHERE_API_KEY=xxxxxxxxxxxxxxxxxxxx
+TOGETHER_API_KEY=xxxxxxxxxxxxxxxxxxxx
+GROQ_API_KEY=xxxxxxxxxxxxxxxxxxxx
+DEEPSEEK_API_KEY=xxxxxxxxxxxxxxxxxxxx
+PERPLEXITY_API_KEY=xxxxxxxxxxxxxxxxxxxx
 ```
 
 ### 3. Run with Docker Compose

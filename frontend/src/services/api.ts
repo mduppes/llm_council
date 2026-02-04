@@ -1,11 +1,21 @@
 // API service for REST endpoints
 
+import type { Model, Provider } from '../types';
+
 const API_BASE = '/api';
 
-export async function fetchModels() {
+export async function fetchModels(): Promise<Model[]> {
   const response = await fetch(`${API_BASE}/chat/models`);
   if (!response.ok) {
     throw new Error('Failed to fetch models');
+  }
+  return response.json();
+}
+
+export async function fetchGroupedModels(): Promise<Provider[]> {
+  const response = await fetch(`${API_BASE}/chat/models/grouped`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch grouped models');
   }
   return response.json();
 }

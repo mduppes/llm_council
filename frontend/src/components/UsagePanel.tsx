@@ -32,17 +32,38 @@ interface UsageStats {
 
 // Provider colors
 const providerColors: Record<string, string> = {
-  openai: 'bg-green-600',
-  anthropic: 'bg-orange-600',
-  google: 'bg-blue-600',
-  xai: 'bg-purple-600',
+  openai: 'bg-green-500',
+  anthropic: 'bg-orange-500',
+  google: 'bg-blue-500',
+  gemini: 'bg-blue-500',
+  xai: 'bg-purple-500',
+  mistral: 'bg-red-500',
+  cohere: 'bg-cyan-500',
+  together_ai: 'bg-yellow-500',
+  groq: 'bg-pink-500',
+  deepseek: 'bg-indigo-500',
+  perplexity: 'bg-teal-500',
 };
 
 function getProviderFromModelId(modelId: string): string {
-  if (modelId.includes('openai') || modelId.startsWith('gpt')) return 'openai';
-  if (modelId.includes('anthropic') || modelId.startsWith('claude')) return 'anthropic';
-  if (modelId.includes('gemini')) return 'google';
-  if (modelId.includes('xai') || modelId.includes('grok')) return 'xai';
+  const lowerModelId = modelId.toLowerCase();
+  
+  // Check for explicit provider prefixes first
+  if (lowerModelId.startsWith('openai/') || lowerModelId.startsWith('gpt')) return 'openai';
+  if (lowerModelId.startsWith('anthropic/') || lowerModelId.startsWith('claude')) return 'anthropic';
+  if (lowerModelId.startsWith('gemini/') || lowerModelId.startsWith('gemini')) return 'gemini';
+  if (lowerModelId.startsWith('xai/') || lowerModelId.includes('grok')) return 'xai';
+  if (lowerModelId.startsWith('mistral/') || lowerModelId.includes('mistral')) return 'mistral';
+  if (lowerModelId.startsWith('cohere/') || lowerModelId.includes('command')) return 'cohere';
+  if (lowerModelId.startsWith('together_ai/') || lowerModelId.startsWith('together/')) return 'together_ai';
+  if (lowerModelId.startsWith('groq/')) return 'groq';
+  if (lowerModelId.startsWith('deepseek/') || lowerModelId.includes('deepseek')) return 'deepseek';
+  if (lowerModelId.startsWith('perplexity/')) return 'perplexity';
+  
+  // Fallback to checking for known patterns
+  if (lowerModelId.includes('openai')) return 'openai';
+  if (lowerModelId.includes('anthropic')) return 'anthropic';
+  
   return 'default';
 }
 
