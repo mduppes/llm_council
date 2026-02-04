@@ -35,6 +35,7 @@ interface ChatStore {
   
   setConversations: (conversations: ConversationSummary[]) => void;
   setCurrentConversation: (id: string | null, messages: Message[]) => void;
+  setMessages: (messages: Message[]) => void;
   clearCurrentConversation: () => void;
   
   // WebSocket actions
@@ -63,28 +64,54 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   
   // Model actions
   setAvailableModels: (models) => {
-    set({ 
-      availableModels: models,
+    // Try to load saved selection from localStorage
+    const savedModels = localStorage.getItem('llm-council-selected-models');
+    let selectedModels: string[];
+    
+    if (savedModels) {
+      try {
+        const parsed = JSON.parse(savedModels) as string[];
+        // Only use saved models that are still available
+        selectedModels = parsed.filter(id => models.some(m => m.id === id));
+        // If no saved models are valid, select all
+        if (selectedModels.length === 0) {
+          selectedModels = models.map(m => m.id);
+        }
+      } catch {
+        selectedModels = models.map(m => m.id);
+      }
+    } else {
       // Select all models by default
-      selectedModels: models.map(m => m.id),
-    });
+      selectedModels = models.map(m => m.id);
+    }
+    
+    set({ availableModels: models, selectedModels });
   },
   
   toggleModel: (modelId) => {
     const { selectedModels } = get();
+    let newSelectedModels: string[];
+    
     if (selectedModels.includes(modelId)) {
-      set({ selectedModels: selectedModels.filter(id => id !== modelId) });
+      newSelectedModels = selectedModels.filter(id => id !== modelId);
     } else {
-      set({ selectedModels: [...selectedModels, modelId] });
+      newSelectedModels = [...selectedModels, modelId];
     }
+    
+    // Persist to localStorage
+    localStorage.setItem('llm-council-selected-models', JSON.stringify(newSelectedModels));
+    set({ selectedModels: newSelectedModels });
   },
   
   selectAllModels: () => {
     const { availableModels } = get();
-    set({ selectedModels: availableModels.map(m => m.id) });
+    const allModelIds = availableModels.map(m => m.id);
+    localStorage.setItem('llm-council-selected-models', JSON.stringify(allModelIds));
+    set({ selectedModels: allModelIds });
   },
   
   deselectAllModels: () => {
+    localStorage.setItem('llm-council-selected-models', JSON.stringify([]));
     set({ selectedModels: [] });
   },
   
@@ -100,6 +127,10 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       currentResponses: {},
       isLoading: false,
     });
+  },
+  
+  setMessages: (messages) => {
+    set({ messages });
   },
   
   clearCurrentConversation: () => {
@@ -268,11 +299,12 @@ export const useChatStore = create<ChatStore>((set, get) => ({
       case 'error':
         console.error('WebSocket error:', data.message);
         if (data.model_id) {
+          const modelId = data.model_id;
           set((state) => ({
             currentResponses: {
               ...state.currentResponses,
-              [data.model_id]: {
-                ...state.currentResponses[data.model_id],
+              [modelId]: {
+                ...state.currentResponses[modelId],
                 error: data.message,
                 isStreaming: false,
               },

@@ -8,6 +8,8 @@ export interface Model {
   id: string;
   name: string;
   provider: string;
+  input_cost_per_million?: number | null;
+  output_cost_per_million?: number | null;
 }
 
 // =============================================================================
@@ -24,6 +26,8 @@ export interface Message {
   tokens_output: number | null;
   latency_ms: number | null;
   error: string | null;
+  is_selected?: boolean;
+  parent_message_id?: string | null;
   created_at: string;
 }
 
@@ -121,6 +125,8 @@ export interface ModelResponse {
   tokens_output: number | null;
   latency_ms: number | null;
   error: string | null;
+  message_id?: string;
+  is_selected?: boolean;
 }
 
 export interface ChatState {

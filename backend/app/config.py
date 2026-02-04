@@ -37,25 +37,25 @@ class Settings(BaseSettings):
         
         if self.openai_api_key:
             models.extend([
-                {"id": "gpt-4o", "name": "GPT-4o", "provider": "openai"},
-                {"id": "gpt-4o-mini", "name": "GPT-4o Mini", "provider": "openai"},
+                {"id": "openai/gpt-4o", "name": "GPT-4o", "provider": "openai"},
+                {"id": "openai/gpt-4o-mini", "name": "GPT-4o Mini", "provider": "openai"},
             ])
         
         if self.anthropic_api_key:
             models.extend([
-                {"id": "claude-3-5-sonnet-20240620", "name": "Claude 3.5 Sonnet", "provider": "anthropic"},
-                {"id": "claude-3-opus-20240229", "name": "Claude 3 Opus", "provider": "anthropic"},
+                {"id": "anthropic/claude-sonnet-4-20250514", "name": "Claude Sonnet 4", "provider": "anthropic"},
+                {"id": "anthropic/claude-3-5-haiku-20241022", "name": "Claude 3.5 Haiku", "provider": "anthropic"},
             ])
         
         if self.gemini_api_key:
             models.extend([
-                {"id": "gemini/gemini-1.5-flash", "name": "Gemini 1.5 Flash", "provider": "google"},
-                {"id": "gemini/gemini-1.5-pro", "name": "Gemini 1.5 Pro", "provider": "google"},
+                {"id": "gemini/gemini-2.0-flash", "name": "Gemini 2.0 Flash", "provider": "google"},
+                {"id": "gemini/gemini-2.0-flash-lite", "name": "Gemini 2.0 Flash Lite", "provider": "google"},
             ])
         
         if self.xai_api_key:
             models.extend([
-                {"id": "xai/grok-2", "name": "Grok 2", "provider": "xai"},
+                {"id": "xai/grok-4-1-fast-reasoning", "name": "Grok 4.1 Fast Reasoning", "provider": "xai"},
             ])
         
         return models

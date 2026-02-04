@@ -3,7 +3,6 @@ import { useChatStore } from '../stores/chatStore';
 import { fetchConversations, fetchConversation, deleteConversation } from '../services/api';
 import { MessageSquare, Plus, Trash2, Loader2 } from 'lucide-react';
 import clsx from 'clsx';
-import type { ConversationSummary } from '../types';
 
 export function HistorySidebar() {
   const { 

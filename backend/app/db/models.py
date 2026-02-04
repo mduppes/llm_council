@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime
 from typing import List, Optional
 
-from sqlalchemy import DateTime, ForeignKey, String, Text, Integer, JSON
+from sqlalchemy import DateTime, ForeignKey, String, Text, Integer, JSON, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base
@@ -71,6 +71,14 @@ class Message(Base):
     latency_ms: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     error: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     
+    # User-selected "best" response for this turn (used for history context)
+    is_selected: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    
+    # Reference to the user message this response is for (for grouping)
+    parent_message_id: Mapped[Optional[str]] = mapped_column(
+        String(36), ForeignKey("messages.id", ondelete="SET NULL"), nullable=True
+    )
+    
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     
     # Relationships
@@ -89,6 +97,8 @@ class Message(Base):
             "tokens_output": self.tokens_output,
             "latency_ms": self.latency_ms,
             "error": self.error,
+            "is_selected": self.is_selected,
+            "parent_message_id": self.parent_message_id,
             "created_at": self.created_at.isoformat(),
         }
 

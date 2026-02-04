@@ -149,19 +149,18 @@ async def process_chat(
         db, conversation.id, message
     )
     
-    # Build message context for LLM
-    # Get previous messages for context
-    previous_messages = await history_service.get_conversation_messages(
-        db, conversation.id
-    )
-    
-    # Add current message
-    messages = previous_messages + [{"role": "user", "content": message}]
-    
     # Stream responses from all models in parallel
     async def stream_model(model_id: str):
         """Stream responses from a single model and save to DB."""
         model_name = get_model_name(model_id)
+        
+        # Get conversation history with this model's own responses where available
+        previous_messages = await history_service.get_conversation_messages(
+            db, conversation.id, for_model_id=model_id
+        )
+        
+        # Add current message
+        messages = previous_messages + [{"role": "user", "content": message}]
         
         full_content = ""
         final_result = None
@@ -195,6 +194,7 @@ async def process_chat(
                 model_id=model_id,
                 model_name=model_name,
                 content=final_result.get("content"),
+                parent_message_id=user_message.id,
                 tokens_input=final_result.get("tokens_input"),
                 tokens_output=final_result.get("tokens_output"),
                 latency_ms=final_result.get("latency_ms"),

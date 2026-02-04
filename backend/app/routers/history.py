@@ -60,6 +60,8 @@ async def get_conversation(
                 tokens_output=msg.tokens_output,
                 latency_ms=msg.latency_ms,
                 error=msg.error,
+                is_selected=msg.is_selected,
+                parent_message_id=msg.parent_message_id,
                 created_at=msg.created_at,
             )
             for msg in conversation.messages
@@ -96,3 +98,24 @@ async def update_title(
         raise HTTPException(status_code=404, detail="Conversation not found")
     
     return {"status": "updated", "title": conversation.title}
+
+
+@router.post("/messages/{message_id}/select")
+async def select_best_response(
+    message_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Mark a message as the selected/best response for its turn."""
+    message = await history_service.set_selected_response(db, message_id)
+    
+    if not message:
+        raise HTTPException(
+            status_code=404, 
+            detail="Message not found or not an assistant message"
+        )
+    
+    return {
+        "status": "selected",
+        "message_id": message.id,
+        "is_selected": message.is_selected,
+    }

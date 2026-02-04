@@ -1,6 +1,7 @@
 import clsx from 'clsx';
-import { Clock, Coins, AlertCircle, Copy, Check } from 'lucide-react';
+import { Clock, Coins, AlertCircle, Copy, Check, Star } from 'lucide-react';
 import { useState } from 'react';
+import Markdown from 'react-markdown';
 import type { ModelResponse } from '../types';
 
 // Provider colors
@@ -21,9 +22,11 @@ function getProviderFromModelId(modelId: string): string {
 
 interface ModelCardProps {
   response: ModelResponse;
+  onSelect?: (messageId: string) => void;
+  showSelect?: boolean;
 }
 
-export function ModelCard({ response }: ModelCardProps) {
+export function ModelCard({ response, onSelect, showSelect = false }: ModelCardProps) {
   const [copied, setCopied] = useState(false);
   
   const provider = getProviderFromModelId(response.model_id);
@@ -45,11 +48,18 @@ export function ModelCard({ response }: ModelCardProps) {
     }
   };
   
+  const handleSelect = () => {
+    if (onSelect && response.message_id) {
+      onSelect(response.message_id);
+    }
+  };
+  
   return (
     <div className={clsx(
       "flex flex-col rounded-xl border",
       colors.bg,
       colors.border,
+      response.is_selected && "ring-2 ring-yellow-500",
       "min-w-0 max-h-[600px]"
     )}>
       {/* Header */}
@@ -70,18 +80,34 @@ export function ModelCard({ response }: ModelCardProps) {
           )}
         </div>
         
-        <button
-          onClick={handleCopy}
-          disabled={!response.content}
-          className="p-1.5 rounded hover:bg-slate-700 disabled:opacity-50 transition-colors"
-          title="Copy response"
-        >
-          {copied ? (
-            <Check className="w-4 h-4 text-green-400" />
-          ) : (
-            <Copy className="w-4 h-4 text-slate-400" />
+        <div className="flex items-center gap-1">
+          {showSelect && response.message_id && !response.isStreaming && !response.error && (
+            <button
+              onClick={handleSelect}
+              className={clsx(
+                "p-1.5 rounded transition-colors",
+                response.is_selected 
+                  ? "text-yellow-400" 
+                  : "text-slate-500 hover:text-yellow-400 hover:bg-slate-700"
+              )}
+              title={response.is_selected ? "Selected as best response" : "Select as best response"}
+            >
+              <Star className={clsx("w-4 h-4", response.is_selected && "fill-current")} />
+            </button>
           )}
-        </button>
+          <button
+            onClick={handleCopy}
+            disabled={!response.content}
+            className="p-1.5 rounded hover:bg-slate-700 disabled:opacity-50 transition-colors"
+            title="Copy response"
+          >
+            {copied ? (
+              <Check className="w-4 h-4 text-green-400" />
+            ) : (
+              <Copy className="w-4 h-4 text-slate-400" />
+            )}
+          </button>
+        </div>
       </div>
       
       {/* Content */}
@@ -96,10 +122,21 @@ export function ModelCard({ response }: ModelCardProps) {
           </div>
         ) : (
           <div className={clsx(
-            "text-slate-200 whitespace-pre-wrap",
+            "text-slate-200 prose prose-invert prose-sm max-w-none",
+            "prose-headings:text-slate-200 prose-headings:mt-4 prose-headings:mb-2",
+            "prose-p:text-slate-200 prose-p:my-3 prose-p:leading-relaxed",
+            "prose-strong:text-slate-100",
+            "prose-code:text-primary-300 prose-code:bg-slate-700 prose-code:px-1 prose-code:rounded",
+            "prose-pre:bg-slate-900 prose-pre:border prose-pre:border-slate-700 prose-pre:my-3",
+            "prose-ul:text-slate-200 prose-ul:my-3 prose-ol:text-slate-200 prose-ol:my-3",
+            "prose-li:text-slate-200 prose-li:my-1",
+            "prose-a:text-primary-400 prose-a:no-underline hover:prose-a:underline",
+            "[&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
             response.isStreaming && "typing-cursor"
           )}>
-            {response.content || (
+            {response.content ? (
+              <Markdown>{response.content}</Markdown>
+            ) : (
               <span className="text-slate-500 italic">Waiting for response...</span>
             )}
           </div>

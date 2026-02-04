@@ -1,13 +1,14 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useChatStore } from './stores/chatStore';
 import { fetchModels } from './services/api';
 import { HistorySidebar, ModelSelector, ResponseGrid, ChatInput } from './components';
-import { Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import { UsagePanel } from './components/UsagePanel';
+import { Menu, X, BarChart3 } from 'lucide-react';
 
 function App() {
   const { setAvailableModels, connectWebSocket, disconnectWebSocket } = useChatStore();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [usagePanelOpen, setUsagePanelOpen] = useState(false);
   
   // Initialize on mount
   useEffect(() => {
@@ -64,9 +65,17 @@ function App() {
             LLM Council
           </h1>
           
-          <span className="text-sm text-slate-500">
+          <span className="text-sm text-slate-500 flex-1">
             Chat with multiple LLMs simultaneously
           </span>
+          
+          <button
+            onClick={() => setUsagePanelOpen(true)}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 transition-colors text-sm text-slate-300"
+          >
+            <BarChart3 className="w-4 h-4" />
+            Usage
+          </button>
         </header>
         
         {/* Chat area */}
@@ -75,6 +84,11 @@ function App() {
         {/* Input */}
         <ChatInput />
       </main>
+      
+      {/* Usage panel modal */}
+      {usagePanelOpen && (
+        <UsagePanel onClose={() => setUsagePanelOpen(false)} />
+      )}
     </div>
   );
 }

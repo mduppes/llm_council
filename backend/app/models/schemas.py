@@ -15,6 +15,8 @@ class ModelInfo(BaseModel):
     id: str
     name: str
     provider: str
+    input_cost_per_million: Optional[float] = None  # Cost per million input tokens
+    output_cost_per_million: Optional[float] = None  # Cost per million output tokens
 
 
 # =============================================================================
@@ -117,6 +119,8 @@ class MessageOut(BaseModel):
     tokens_output: Optional[int]
     latency_ms: Optional[int]
     error: Optional[str]
+    is_selected: bool = False
+    parent_message_id: Optional[str] = None
     created_at: datetime
 
 

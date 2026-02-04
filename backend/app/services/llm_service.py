@@ -5,7 +5,7 @@ import time
 from typing import AsyncGenerator, List, Optional, Dict, Any
 
 import litellm
-from litellm import acompletion
+from litellm import acompletion, model_cost
 
 from app.config import get_settings
 
@@ -21,9 +21,36 @@ class LLMService:
     def __init__(self):
         self.settings = get_settings()
     
+    def get_model_cost(self, model_id: str) -> dict:
+        """Get cost information for a model from LiteLLM."""
+        try:
+            # LiteLLM model_cost is a dict with model names as keys
+            # Try exact match first, then try without provider prefix
+            cost_info = model_cost.get(model_id, {})
+            
+            if not cost_info:
+                # Try without provider prefix (e.g., "gpt-4o" instead of "openai/gpt-4o")
+                model_name = model_id.split("/")[-1] if "/" in model_id else model_id
+                cost_info = model_cost.get(model_name, {})
+            
+            input_cost = cost_info.get("input_cost_per_token", 0) * 1_000_000
+            output_cost = cost_info.get("output_cost_per_token", 0) * 1_000_000
+            
+            return {
+                "input_cost_per_million": round(input_cost, 4) if input_cost else None,
+                "output_cost_per_million": round(output_cost, 4) if output_cost else None,
+            }
+        except Exception:
+            return {"input_cost_per_million": None, "output_cost_per_million": None}
+    
     def get_available_models(self) -> List[dict]:
         """Get list of available models based on configured API keys."""
-        return self.settings.enabled_models
+        models = self.settings.enabled_models
+        # Enrich with cost information
+        for model in models:
+            cost_info = self.get_model_cost(model["id"])
+            model.update(cost_info)
+        return models
     
     async def complete(
         self,

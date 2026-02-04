@@ -123,6 +123,7 @@ class HistoryService:
         model_id: str,
         model_name: str,
         content: Optional[str],
+        parent_message_id: Optional[str] = None,
         tokens_input: Optional[int] = None,
         tokens_output: Optional[int] = None,
         latency_ms: Optional[int] = None,
@@ -135,6 +136,7 @@ class HistoryService:
             content=content,
             model_id=model_id,
             model_name=model_name,
+            parent_message_id=parent_message_id,
             tokens_input=tokens_input,
             tokens_output=tokens_output,
             latency_ms=latency_ms,
@@ -149,29 +151,113 @@ class HistoryService:
         self,
         db: AsyncSession,
         conversation_id: str,
+        for_model_id: Optional[str] = None,
     ) -> List[dict]:
         """
         Get messages formatted for LLM context.
         Returns list of {role, content} dicts.
-        Only includes user messages and successful assistant responses.
+        
+        If for_model_id is provided, uses that model's own responses where available.
+        Falls back to: 1) selected/best response, 2) first successful response.
         """
         conversation = await self.get_conversation(db, conversation_id)
         if not conversation:
             return []
         
-        # Build context: for each user message, include one assistant response
-        # (typically we'd pick the best or first successful one)
+        # Group messages by user message (turn)
         context = []
+        current_user_msg = None
+        responses_for_turn: List[Message] = []
+        
         for msg in conversation.messages:
             if msg.role == "user":
-                context.append({"role": "user", "content": msg.content})
-            elif msg.role == "assistant" and msg.content and not msg.error:
-                # Only include one assistant response per user message
-                # In practice, you might want to select the "best" or let user choose
-                if context and context[-1]["role"] == "user":
-                    context.append({"role": "assistant", "content": msg.content})
+                # Process previous turn's responses before starting new turn
+                if current_user_msg and responses_for_turn:
+                    context.append({"role": "user", "content": current_user_msg.content})
+                    best_response = self._select_best_response(responses_for_turn, for_model_id)
+                    if best_response:
+                        context.append({"role": "assistant", "content": best_response.content})
+                
+                # Start new turn
+                current_user_msg = msg
+                responses_for_turn = []
+            elif msg.role == "assistant":
+                responses_for_turn.append(msg)
+        
+        # Process final turn
+        if current_user_msg and responses_for_turn:
+            context.append({"role": "user", "content": current_user_msg.content})
+            best_response = self._select_best_response(responses_for_turn, for_model_id)
+            if best_response:
+                context.append({"role": "assistant", "content": best_response.content})
         
         return context
+    
+    def _select_best_response(
+        self,
+        responses: List[Message],
+        for_model_id: Optional[str] = None,
+    ) -> Optional[Message]:
+        """
+        Select the best response for a turn.
+        Priority:
+        1. The response from for_model_id (if provided and successful)
+        2. Any response marked as is_selected
+        3. First successful response
+        """
+        successful = [r for r in responses if r.content and not r.error]
+        if not successful:
+            return None
+        
+        # Priority 1: Same model's own response
+        if for_model_id:
+            for r in successful:
+                if r.model_id == for_model_id:
+                    return r
+        
+        # Priority 2: User-selected best response
+        for r in successful:
+            if r.is_selected:
+                return r
+        
+        # Priority 3: First successful response
+        return successful[0]
+    
+    async def set_selected_response(
+        self,
+        db: AsyncSession,
+        message_id: str,
+    ) -> Optional[Message]:
+        """
+        Mark a message as the selected/best response for its turn.
+        Clears is_selected from other responses to the same parent message.
+        """
+        # Get the message
+        result = await db.execute(
+            select(Message).where(Message.id == message_id)
+        )
+        message = result.scalar_one_or_none()
+        if not message or message.role != "assistant":
+            return None
+        
+        # Find all sibling responses (same parent_message_id)
+        if message.parent_message_id:
+            result = await db.execute(
+                select(Message).where(
+                    Message.parent_message_id == message.parent_message_id,
+                    Message.role == "assistant"
+                )
+            )
+            siblings = list(result.scalars().all())
+            for sibling in siblings:
+                sibling.is_selected = (sibling.id == message_id)
+        else:
+            # Fallback: just set this one
+            message.is_selected = True
+        
+        await db.commit()
+        await db.refresh(message)
+        return message
 
 
 # Singleton instance

@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import get_settings
 from app.db.database import init_db
-from app.routers import chat, history
+from app.routers import chat, history, usage
 
 settings = get_settings()
 
@@ -52,6 +52,7 @@ app.add_middleware(
 # Include routers
 app.include_router(chat.router)
 app.include_router(history.router)
+app.include_router(usage.router)
 
 
 @app.get("/")

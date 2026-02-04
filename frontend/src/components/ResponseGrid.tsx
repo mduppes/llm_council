@@ -1,10 +1,33 @@
 import { useChatStore } from '../stores/chatStore';
 import { ModelCard } from './ModelCard';
 import { User } from 'lucide-react';
-import type { Message, ModelResponse } from '../types';
+import { selectBestResponse } from '../services/api';
+import type { Message } from '../types';
 
 export function ResponseGrid() {
-  const { messages, currentResponses, isLoading } = useChatStore();
+  const { messages, currentResponses, setMessages } = useChatStore();
+  
+  const handleSelectBest = async (messageId: string) => {
+    try {
+      await selectBestResponse(messageId);
+      // Update local state to reflect selection
+      setMessages(messages.map(msg => {
+        if (msg.id === messageId) {
+          return { ...msg, is_selected: true };
+        }
+        // Find and unselect siblings (same parent_message_id)
+        const selectedMsg = messages.find(m => m.id === messageId);
+        if (selectedMsg?.parent_message_id && 
+            msg.parent_message_id === selectedMsg.parent_message_id &&
+            msg.id !== messageId) {
+          return { ...msg, is_selected: false };
+        }
+        return msg;
+      }));
+    } catch (e) {
+      console.error('Failed to select response:', e);
+    }
+  };
   
   // Group messages by user turns
   const turns: Array<{
@@ -62,7 +85,7 @@ export function ResponseGrid() {
           
           {/* Assistant responses grid */}
           {turn.assistantMessages.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
               {turn.assistantMessages.map((msg) => (
                 <ModelCard
                   key={msg.id}
@@ -75,7 +98,11 @@ export function ResponseGrid() {
                     tokens_output: msg.tokens_output,
                     latency_ms: msg.latency_ms,
                     error: msg.error,
+                    message_id: msg.id,
+                    is_selected: msg.is_selected,
                   }}
+                  showSelect={true}
+                  onSelect={handleSelectBest}
                 />
               ))}
             </div>
@@ -83,7 +110,7 @@ export function ResponseGrid() {
           
           {/* Streaming responses for the last turn */}
           {turnIndex === turns.length - 1 && hasStreamingResponses && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
               {Object.values(currentResponses).map((response) => (
                 <ModelCard key={response.model_id} response={response} />
               ))}
@@ -94,7 +121,7 @@ export function ResponseGrid() {
       
       {/* If we have streaming responses but no turns yet (first message) */}
       {turns.length === 0 && hasStreamingResponses && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
           {Object.values(currentResponses).map((response) => (
             <ModelCard key={response.model_id} response={response} />
           ))}

@@ -45,3 +45,29 @@ export async function updateConversationTitle(id: string, title: string) {
   }
   return response.json();
 }
+
+export async function fetchUsageStats(period: 'day' | 'week' | 'month' | 'all' = 'month') {
+  const response = await fetch(`${API_BASE}/usage?period=${period}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch usage stats');
+  }
+  return response.json();
+}
+
+export async function fetchDailyUsage(days: number = 7) {
+  const response = await fetch(`${API_BASE}/usage/daily?days=${days}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch daily usage');
+  }
+  return response.json();
+}
+
+export async function selectBestResponse(messageId: string) {
+  const response = await fetch(`${API_BASE}/history/messages/${messageId}/select`, {
+    method: 'POST',
+  });
+  if (!response.ok) {
+    throw new Error('Failed to select response');
+  }
+  return response.json();
+}

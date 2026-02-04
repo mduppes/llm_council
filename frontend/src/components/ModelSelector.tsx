@@ -1,5 +1,5 @@
 import { useChatStore } from '../stores/chatStore';
-import { Check, Square, CheckSquare } from 'lucide-react';
+import { Square, CheckSquare } from 'lucide-react';
 import clsx from 'clsx';
 
 // Provider colors for visual distinction
@@ -9,6 +9,12 @@ const providerColors: Record<string, string> = {
   google: 'bg-blue-600',
   xai: 'bg-purple-600',
 };
+
+function formatCost(cost: number | null | undefined): string {
+  if (cost == null) return '?';
+  if (cost < 0.01) return '<$0.01';
+  return `$${cost.toFixed(2)}`;
+}
 
 export function ModelSelector() {
   const { availableModels, selectedModels, toggleModel, selectAllModels, deselectAllModels } = useChatStore();
@@ -54,6 +60,7 @@ export function ModelSelector() {
         {availableModels.map((model) => {
           const isSelected = selectedModels.includes(model.id);
           const colorClass = providerColors[model.provider] || 'bg-slate-600';
+          const hasCost = model.input_cost_per_million != null || model.output_cost_per_million != null;
           
           return (
             <button
@@ -63,6 +70,7 @@ export function ModelSelector() {
                 "w-full flex items-center gap-2 px-2 py-1.5 rounded text-left text-sm transition-colors",
                 isSelected ? "bg-slate-700" : "bg-transparent hover:bg-slate-800"
               )}
+              title={hasCost ? `Input: ${formatCost(model.input_cost_per_million)}/1M tokens\nOutput: ${formatCost(model.output_cost_per_million)}/1M tokens` : 'Cost data unavailable'}
             >
               {isSelected ? (
                 <CheckSquare className="w-4 h-4 text-primary-400 flex-shrink-0" />
@@ -73,11 +81,17 @@ export function ModelSelector() {
               <span className={clsx("w-2 h-2 rounded-full flex-shrink-0", colorClass)} />
               
               <span className={clsx(
-                "truncate",
+                "truncate flex-1",
                 isSelected ? "text-slate-200" : "text-slate-400"
               )}>
                 {model.name}
               </span>
+              
+              {hasCost && (
+                <span className="text-xs text-slate-500 flex-shrink-0">
+                  {formatCost(model.input_cost_per_million)}
+                </span>
+              )}
             </button>
           );
         })}
