@@ -117,6 +117,26 @@ PROVIDER_CONFIG = {
         "env_var": "perplexity_api_key",
         "description": "Perplexity online models with search",
     },
+    "openrouter": {
+        "name": "OpenRouter",
+        "env_var": "openrouter_api_key",
+        "description": "Unified access to OpenAI, Anthropic, Meta, and 100+ models",
+    },
+    "fireworks_ai": {
+        "name": "Fireworks AI",
+        "env_var": "fireworks_api_key",
+        "description": "Fast inference for Llama, Mixtral, and other open models",
+    },
+    "bedrock": {
+        "name": "Amazon Bedrock",
+        "env_var": "aws_access_key_id",
+        "description": "AWS-hosted Claude, Llama, and Titan models",
+    },
+    "azure": {
+        "name": "Azure OpenAI",
+        "env_var": "azure_api_key",
+        "description": "Microsoft Azure-hosted OpenAI models",
+    },
 }
 
 def _extract_model_sort_key(model_id: str) -> tuple:

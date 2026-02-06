@@ -35,6 +35,10 @@ class Settings(BaseSettings):
     groq_api_key: str = ""
     deepseek_api_key: str = ""
     perplexity_api_key: str = ""
+    openrouter_api_key: str = ""
+    fireworks_api_key: str = ""
+    aws_access_key_id: str = ""  # For Amazon Bedrock
+    azure_api_key: str = ""
     
     # Available models configuration - now dynamically loaded from LiteLLM
     @property
